@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>系统公告</title>
+    <style>
+        :root {
+            --primary: #D36C45;
+            --text: #333;
+            --text-light: #767676;
+            --border: #E5E5E5;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: transparent;
+            color: var(--text);
+            height: 100vh;
+            overflow: hidden;
+        }
+        .container {
+            background: #fff;
+            border-radius: 10px;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+        }
+        .header {
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .header-left { display: flex; align-items: center; gap: 12px; }
+        .title { font-size: 17px; font-weight: 600; }
+        .badge {
+            background: #F5F5F5;
+            color: #666;
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+        }
+        .header-right { display: flex; align-items: center; gap: 14px; }
+        .link {
+            color: var(--text-light);
+            font-size: 13px;
+            text-decoration: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            background: none;
+            border: none;
+            padding: 0;
+        }
+        .link:hover { color: var(--primary); }
+        .close-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: #bbb;
+            padding: 2px;
+            display: flex;
+            margin-left: 2px;
+        }
+        .close-btn:hover { color: #666; }
+        .content {
+            flex: 1;
+            overflow-y: auto;
+            transition: opacity 0.25s;
+        }
+        .content::-webkit-scrollbar { width: 4px; }
+        .content::-webkit-scrollbar-thumb { background: #ddd; border-radius: 2px; }
+        .content { scrollbar-width: thin; scrollbar-color: #ddd transparent; }
+        .card {
+            padding: 18px 20px;
+            border-bottom: 1px solid #F0F0F0;
+        }
+        .card:last-child { border-bottom: none; }
+        .card-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .card-meta { display: flex; align-items: center; gap: 10px; }
+        .version {
+            font-size: 12px;
+            color: #888;
+            border: 1px solid #ddd;
+            padding: 2px 8px;
+            border-radius: 4px;
+        }
+        .card-title { font-size: 15px; font-weight: 600; color: #111; }
+        .timestamp { font-size: 12px; color: var(--text-light); }
+        .card-body {
+            font-size: 14px;
+            line-height: 1.7;
+            color: #444;
+        }
+        .card-body p { margin-bottom: 10px; }
+        .card-body p:last-child { margin-bottom: 0; }
+        .empty {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            flex: 1;
+            color: #888;
+            gap: 14px;
+        }
+        .empty.show { display: flex; }
+        .empty-icon { font-size: 28px; }
+        .restore-btn {
+            color: var(--primary);
+            background: none;
+            border: 1px solid var(--primary);
+            padding: 7px 18px;
+            border-radius: 18px;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .restore-btn:hover { background: var(--primary); color: #fff; }
+        .footer {
+            padding: 14px 20px;
+            border-top: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .footer-info { font-size: 12px; color: var(--text-light); }
+        .footer-btns { display: flex; gap: 10px; }
+        .btn {
+            padding: 8px 18px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.15s;
+            border: 1px solid transparent;
+        }
+        .btn-outline {
+            background: #fff;
+            border-color: #ddd;
+            color: #666;
+        }
+        .btn-outline:hover { border-color: #999; color: #333; }
+        .btn-primary {
+            background: var(--primary);
+            color: #fff;
+        }
+        .btn-primary:hover { background: #c25d38; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="header-left">
+                <span class="title">系统公告</span>
+                <span class="badge">共 <span id="count">0</span> 条</span>
+            </div>
+            <div class="header-right">
+                <button class="link" onclick="location.reload()" aria-label="刷新">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M23 4v6h-6"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
+                    </svg>
+                </button>
+                <a class="link" href="#">查看全部</a>
+                <button class="close-btn" onclick="markRead()" aria-label="关闭">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+        <div id="content" class="content"></div>
+        <div id="empty" class="empty">
+            <div class="empty-icon">✅</div>
+            <p>目前没有新通知</p>
+            <button class="restore-btn" onclick="restore()">查看历史消息</button>
+        </div>
+        <div class="footer">
+            <div class="footer-info">最近更新：2025-12-25</div>
+            <div class="footer-btns">
+                <button class="btn btn-outline" onclick="markRead()">关闭</button>
+                <button class="btn btn-primary" onclick="markRead()">我已阅读</button>
+            </div>
+        </div>
+    </div>
+    <script>
+        const data = [
+            { id: 2, title: 'V1.0.2', date: '2025/12/25', content: '优化相册逻辑' },
+            { id: 1, title: 'V1.0.1', date: '2025/12/25', content: '新增2026马拉松和越野比赛日历' }
+        ];
+        const KEY = 'notion_announce_read';
+        const latestId = Math.max(...data.map(d => d.id));
+
+        function storage(action, val) {
+            try {
+                if (action === 'get') return localStorage.getItem(KEY);
+                if (action === 'set') localStorage.setItem(KEY, val);
+                if (action === 'del') localStorage.removeItem(KEY);
+            } catch (e) { return null; }
+        }
+
+        function timeAgo(dateStr) {
+            const diff = Math.floor((Date.now() - new Date(dateStr)) / 86400000);
+            if (diff < 0) return '今天';
+            return diff === 0 ? '今天' : diff + '天前';
+        }
+
+        function render(isRead) {
+            const content = document.getElementById('content');
+            const empty = document.getElementById('empty');
+            document.getElementById('count').textContent = data.length;
+            if (isRead) {
+                content.style.display = 'none';
+                empty.classList.add('show');
+            } else {
+                content.style.display = 'block';
+                empty.classList.remove('show');
+                content.innerHTML = data.map((item, i) => `
+                    <div class="card">
+                        <div class="card-top">
+                            <div class="card-meta">
+                                <span class="version">#${i + 1}</span>
+                                <span class="card-title">${item.title}</span>
+                            </div>
+                            <span class="timestamp">${timeAgo(item.date)} · ${item.date.replace(/\//g, '-')}</span>
+                        </div>
+                        <div class="card-body"><p>${item.content}</p></div>
+                    </div>`).join('');
+            }
+        }
+
+        function markRead() {
+            const content = document.getElementById('content');
+            content.style.opacity = '0';
+            setTimeout(() => {
+                storage('set', latestId);
+                render(true);
+                content.style.opacity = '1';
+            }, 250);
+        }
+
+        function restore() {
+            storage('del');
+            render(false);
+        }
+
+        const readId = parseInt(storage('get')) || 0;
+        render(readId >= latestId);
+    </script>
+</body>
+</html>
