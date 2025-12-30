@@ -10,6 +10,7 @@
             --text: #333;
             --text-light: #767676;
             --border: #E5E5E5;
+            --bg-search: #f3f3f3;
         }
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
@@ -28,22 +29,44 @@
             box-shadow: 0 1px 3px rgba(0,0,0,0.08);
         }
         .header {
-            padding: 16px 20px;
+            padding: 12px 20px; /* 稍微减小padding以容纳搜索框 */
             border-bottom: 1px solid var(--border);
             display: flex;
             align-items: center;
             justify-content: space-between;
         }
-        .header-left { display: flex; align-items: center; gap: 12px; }
-        .title { font-size: 17px; font-weight: 600; }
-        .badge {
-            background: #F5F5F5;
-            color: #666;
-            padding: 3px 10px;
-            border-radius: 12px;
-            font-size: 12px;
+        .header-left { display: flex; align-items: center; gap: 12px; flex: 1; }
+        .title { font-size: 17px; font-weight: 600; white-space: nowrap; }
+        
+        /* 搜索框样式 - Start */
+        .search-wrapper {
+            display: flex;
+            align-items: center;
+            background: var(--bg-search);
+            padding: 4px 10px;
+            border-radius: 16px;
+            margin-left: 8px;
+            transition: all 0.2s;
+            width: 140px; /* 默认宽度 */
         }
-        .header-right { display: flex; align-items: center; gap: 14px; }
+        .search-wrapper:focus-within {
+            background: #fff;
+            box-shadow: 0 0 0 2px var(--primary);
+            width: 180px; /* 聚焦时变宽 */
+        }
+        .search-icon { color: #999; margin-right: 6px; }
+        .search-input {
+            border: none;
+            background: transparent;
+            outline: none;
+            font-size: 13px;
+            color: var(--text);
+            width: 100%;
+        }
+        .search-input::placeholder { color: #aaa; }
+        /* 搜索框样式 - End */
+
+        .header-right { display: flex; align-items: center; gap: 14px; margin-left: 10px;}
         .link {
             color: var(--text-light);
             font-size: 13px;
@@ -55,6 +78,7 @@
             background: none;
             border: none;
             padding: 0;
+            white-space: nowrap;
         }
         .link:hover { color: var(--primary); }
         .close-btn {
@@ -78,6 +102,11 @@
         .card {
             padding: 18px 20px;
             border-bottom: 1px solid #F0F0F0;
+            transition: background 0.2s;
+        }
+        /* 置顶样式 */
+        .card.pinned {
+            background: #fff9f6; /* 轻微的背景色区分 */
         }
         .card:last-child { border-bottom: none; }
         .card-top {
@@ -86,13 +115,25 @@
             align-items: center;
             margin-bottom: 10px;
         }
-        .card-meta { display: flex; align-items: center; gap: 10px; }
+        .card-meta { display: flex; align-items: center; gap: 8px; }
         .version {
             font-size: 12px;
             color: #888;
             border: 1px solid #ddd;
             padding: 2px 8px;
             border-radius: 4px;
+        }
+        /* 置顶标签样式 */
+        .pin-badge {
+            font-size: 12px;
+            color: #fff;
+            background: #ff4757;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 2px;
         }
         .card-title { font-size: 15px; font-weight: 600; color: #111; }
         .timestamp { font-size: 12px; color: var(--text-light); }
@@ -143,17 +184,13 @@
             transition: all 0.15s;
             border: 1px solid transparent;
         }
-        .btn-outline {
-            background: #fff;
-            border-color: #ddd;
-            color: #666;
-        }
+        .btn-outline { background: #fff; border-color: #ddd; color: #666; }
         .btn-outline:hover { border-color: #999; color: #333; }
-        .btn-primary {
-            background: var(--primary);
-            color: #fff;
-        }
+        .btn-primary { background: var(--primary); color: #fff; }
         .btn-primary:hover { background: #c25d38; }
+        
+        /* 搜索无结果提示 */
+        .no-result { text-align: center; padding: 40px; color: #999; font-size: 14px; display: none; }
     </style>
 </head>
 <body>
@@ -161,15 +198,20 @@
         <div class="header">
             <div class="header-left">
                 <span class="title">系统公告</span>
-                <span class="badge">共 <span id="count">0</span> 条</span>
+                <div class="search-wrapper">
+                    <svg class="search-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                    </svg>
+                    <input type="text" id="searchInput" class="search-input" placeholder="搜索..." oninput="handleSearch()">
+                </div>
             </div>
             <div class="header-right">
-                <button class="link" onclick="location.reload()" aria-label="刷新">
+                <span class="badge" style="display:none">共 <span id="count">0</span> 条</span> <button class="link" onclick="location.reload()" aria-label="刷新">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M23 4v6h-6"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
                     </svg>
                 </button>
-                <a class="link" href="#">查看全部</a>
                 <button class="close-btn" onclick="markRead()" aria-label="关闭">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
@@ -177,14 +219,17 @@
                 </button>
             </div>
         </div>
+        
         <div id="content" class="content"></div>
+        <div id="no-result" class="no-result">未找到相关公告</div>
+
         <div id="empty" class="empty">
             <div class="empty-icon">✅</div>
             <p>目前没有新通知</p>
             <button class="restore-btn" onclick="restore()">查看历史消息</button>
         </div>
         <div class="footer">
-            <div class="footer-info">最近更新：2025-12-25</div>
+            <div class="footer-info">最近更新：2025-12-30</div>
             <div class="footer-btns">
                 <button class="btn btn-outline" onclick="markRead()">关闭</button>
                 <button class="btn btn-primary" onclick="markRead()">我已阅读</button>
@@ -192,15 +237,18 @@
         </div>
     </div>
     <script>
+        // 数据源：增加 top: true 属性来实现置顶
         const data = [
- 	    { id: 5, title: 'V1.0.5', date: '2025/12/30', content: '优化相册上传渠道，可支持更大文件上传，添加索引功能' },
+            { id: 5, title: 'V1.0.5', date: '2025/12/30', content: '优化相册上传渠道，可支持更大文件上传，添加索引功能' },
             { id: 4, title: 'V1.0.4', date: '2025/12/29', content: '添加pb wall，可以自行上传自己的pb成绩进行记录和展示' },
-	    { id: 3, title: 'V1.0.3', date: '2025/12/28', content: '健身房预约界面（应急用）：https://janeblackcc-gif.github.io/taiikukann/account.html' },
+            { id: 3, title: 'V1.0.3健身房预约', date: '2025/12/28', content: '健身房预约界面（应急用）：https://janeblackcc-gif.github.io/taiikukann/account.html', top: true }, // 设置为置顶
             { id: 2, title: 'V1.0.2', date: '2025/12/25', content: '优化相册逻辑' },
             { id: 1, title: 'V1.0.1', date: '2025/12/25', content: '新增2026马拉松和越野比赛日历' }
         ];
+
         const KEY = 'notion_announce_read';
         const latestId = Math.max(...data.map(d => d.id));
+        let isSearching = false;
 
         function storage(action, val) {
             try {
@@ -216,27 +264,84 @@
             return diff === 0 ? '今天' : diff + '天前';
         }
 
-        function render(isRead) {
+        // 渲染函数，增加关键词过滤
+        function render(isRead, keyword = '') {
             const content = document.getElementById('content');
             const empty = document.getElementById('empty');
-            document.getElementById('count').textContent = data.length;
-            if (isRead) {
+            const noResult = document.getElementById('no-result');
+            
+            // 如果正在搜索，强制显示内容区域
+            if (keyword) {
+                isRead = false; 
+                isSearching = true;
+            } else {
+                isSearching = false;
+            }
+
+            // 过滤数据
+            let filteredData = data;
+            if (keyword) {
+                const lowerKey = keyword.toLowerCase();
+                filteredData = data.filter(item => 
+                    item.title.toLowerCase().includes(lowerKey) || 
+                    item.content.toLowerCase().includes(lowerKey)
+                );
+            }
+
+            // 排序逻辑：置顶优先 (top: true)，然后按 ID 倒序
+            filteredData.sort((a, b) => {
+                const topA = a.top ? 1 : 0;
+                const topB = b.top ? 1 : 0;
+                if (topA !== topB) return topB - topA; // 置顶在前
+                return b.id - a.id; // ID倒序
+            });
+
+            document.getElementById('count').textContent = filteredData.length;
+
+            if (isRead && !isSearching) {
                 content.style.display = 'none';
+                noResult.style.display = 'none';
                 empty.classList.add('show');
             } else {
-                content.style.display = 'block';
                 empty.classList.remove('show');
-                content.innerHTML = data.map((item, i) => `
-                    <div class="card">
-                        <div class="card-top">
-                            <div class="card-meta">
-                                <span class="version">#${i + 1}</span>
-                                <span class="card-title">${item.title}</span>
+                
+                if (filteredData.length === 0) {
+                    content.style.display = 'none';
+                    noResult.style.display = 'block';
+                } else {
+                    noResult.style.display = 'none';
+                    content.style.display = 'block';
+                    content.innerHTML = filteredData.map((item, i) => {
+                        // 检查是否置顶，添加特定样式和标签
+                        const pinHtml = item.top ? `<span class="pin-badge">🔥 置顶</span>` : `<span class="version">#${item.id}</span>`;
+                        const pinClass = item.top ? 'pinned' : '';
+                        
+                        return `
+                        <div class="card ${pinClass}">
+                            <div class="card-top">
+                                <div class="card-meta">
+                                    ${pinHtml}
+                                    <span class="card-title">${item.title}</span>
+                                </div>
+                                <span class="timestamp">${timeAgo(item.date)}</span>
                             </div>
-                            <span class="timestamp">${timeAgo(item.date)} · ${item.date.replace(/\//g, '-')}</span>
-                        </div>
-                        <div class="card-body"><p>${item.content}</p></div>
-                    </div>`).join('');
+                            <div class="card-body"><p>${item.content}</p></div>
+                        </div>`;
+                    }).join('');
+                }
+            }
+        }
+
+        function handleSearch() {
+            const val = document.getElementById('searchInput').value;
+            // 如果在“全部已读”状态下开始搜索，我们需要临时忽略读取状态
+            const readId = parseInt(storage('get')) || 0;
+            const isRead = readId >= latestId;
+            render(isRead, val);
+            
+            // 如果清空搜索，且原本是已读状态，恢复到已读界面
+            if (val === '' && isRead) {
+               render(true);
             }
         }
 
@@ -245,6 +350,7 @@
             content.style.opacity = '0';
             setTimeout(() => {
                 storage('set', latestId);
+                document.getElementById('searchInput').value = ''; // 标记已读时清空搜索
                 render(true);
                 content.style.opacity = '1';
             }, 250);
@@ -252,6 +358,7 @@
 
         function restore() {
             storage('del');
+            document.getElementById('searchInput').value = '';
             render(false);
         }
 
